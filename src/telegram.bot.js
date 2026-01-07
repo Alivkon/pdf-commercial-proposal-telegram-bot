@@ -554,6 +554,67 @@ bot.onText(/\/list_firms/, async (msg) => {
   }
 });
 
+// Handle /list_prices command
+bot.onText(/\/list_prices/, async (msg) => {
+  const chatId = msg.chat.id;
+  console.log(`Received /list_prices command from ${chatId}`);
+
+  try {
+    await bot.sendChatAction(chatId, 'typing');
+
+    const client = await pool.connect();
+    try {
+      const result = await client.query(`
+        SELECT
+          name,
+          connector,
+          price_per_unit,
+          vat,
+          total_with_vat,
+          warranty
+        FROM "PriceAll"
+        ORDER BY name, connector
+      `);
+
+      if (result.rows.length === 0) {
+        await bot.sendMessage(chatId, '📋 В базе данных пока нет товаров');
+        return;
+      }
+
+      let message = `📋 *Список товаров* (всего: ${result.rows.length}):\n\n`;
+
+      result.rows.forEach((item, index) => {
+        const name = item.name || 'Без названия';
+        const connector = item.connector ? ` | ${item.connector}` : '';
+        const price = Number(item.price_per_unit);
+        const vat = Number(item.vat);
+        const total = Number(item.total_with_vat);
+        const warranty = item.warranty || '—';
+
+        message += `*${index + 1}. ${name}${connector}*\n`;
+        message += `   Цена: \`${Number.isFinite(price) ? price.toFixed(2) : '—'}\`\n`;
+        message += `   НДС: \`${Number.isFinite(vat) ? vat.toFixed(2) : '—'}\`\n`;
+        message += `   Итого: \`${Number.isFinite(total) ? total.toFixed(2) : '—'}\`\n`;
+        message += `   Гарантия: ${warranty}\n\n`;
+
+        if (message.length > 3500) {
+          bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+          message = '';
+        }
+      });
+
+      if (message.length > 0) {
+        await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+      }
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error processing /list_prices command:', error);
+    await bot.sendMessage(chatId, '❌ Произошла ошибка при получении списка товаров');
+  }
+});
+
 // Handle text messages
 bot.on('text', async (msg) => {
   const chatId = msg.chat.id;
