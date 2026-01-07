@@ -63,7 +63,7 @@ function groupProductsByWarranty(products) {
  */
 function renderProductTable(doc, products, tableTop, x, w, rowHeight, left, colsCount, gap, pageW, wOther) {
   // Рендер заголовков
-  doc.font('GothamPro-Bold').text('Наименование', x[0], tableTop-20, { width: w[0], align: 'center' });
+  doc.font('GothamPro-Bold').text('Наименование', x[0], tableTop, { width: w[0], align: 'center' });
   doc.font('GothamPro-Bold').text('Разъем', x[1], tableTop, { width: w[1], align: 'center' });
   doc.font('GothamPro-Bold').text('Цена за шт., руб.', x[2], tableTop - 8, { width: w[2], align: 'center' });
   doc.font('GothamPro-Bold').text('НДС, руб.', x[3], tableTop, { width: w[3], align: 'center' });
