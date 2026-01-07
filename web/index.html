@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База компаний - Elter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 База компаний Elter</h1>
+            <p>Реестр организаций из базы данных PostgreSQL</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item clickable" id="companiesStatItem">
+                <span class="stat-value" id="totalCompanies">-</span>
+                <span class="stat-label">Всего компаний</span>
+            </div>
+            <div class="stat-item clickable" id="priceAllStatItem">
+                <span class="stat-value" id="totalProducts">-</span>
+                <span class="stat-label">Товаров</span>
+            </div>
+            <div class="stat-item clickable" id="documentsStatItem">
+                <span class="stat-value" id="totalDocuments">-</span>
+                <span class="stat-label">Документов</span>
+            </div>
+            <div class="stat-item clickable" id="offersStatItem">
+                <span class="stat-value" id="totalOffers">-</span>
+                <span class="stat-label">Коммерческих предложений</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="lastUpdated">-</span>
+                <span class="stat-label">Последнее обновление</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск по названию, ИНН, КПП...">
+            </div>
+            <button class="btn btn-primary" onclick="loadCompanies()">🔄 Обновить</button>
+        </div>
+
+        <div class="table-container">
+            <div class="table-title" id="tableTitle">Компании</div>
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Загрузка данных...</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+
+            <table id="companiesTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">№</th>
+                        <th onclick="sortTable(1)">Название</th>
+                        <th onclick="sortTable(2)">ИНН</th>
+                        <th onclick="sortTable(3)">КПП</th>
+                        <th onclick="sortTable(4)">ОГРН</th>
+                        <th onclick="sortTable(5)">Руководитель</th>
+                        <th onclick="sortTable(6)">Email</th>
+                        <th onclick="sortTable(7)">Дата добавления</th>
+                    </tr>
+                </thead>
+                <tbody id="companiesBody">
+                </tbody>
+            </table>
+
+            <table id="documentsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Документ</th>
+                        <th>Компания</th>
+                        <th>ИНН</th>
+                        <th>Дата</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="documentsBody">
+                </tbody>
+            </table>
+
+            <table id="offersTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Файл</th>
+                        <th>Размер</th>
+                        <th>Дата</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="offersBody">
+                </tbody>
+            </table>
+
+            <table id="priceAllTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th onclick="sortPriceTable(0)">№</th>
+                        <th onclick="sortPriceTable(1)">Наименование</th>
+                        <th onclick="sortPriceTable(2)">Разъем</th>
+                        <th onclick="sortPriceTable(3)">Цена за шт., руб.</th>
+                        <th onclick="sortPriceTable(4)">НДС, руб.</th>
+                        <th onclick="sortPriceTable(5)">Стоимость, руб. (с НДС)</th>
+                        <th onclick="sortPriceTable(6)">Гарантия</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="priceAllBody">
+                </tbody>
+            </table>
+
+            <div id="noData" class="no-data" style="display: none;">
+                <div class="no-data-icon">📂</div>
+                <h3>Нет данных</h3>
+                <p>В базе данных пока нет компаний</p>
+            </div>
+
+            <div id="noProducts" class="no-data" style="display: none;">
+                <div class="no-data-icon">📂</div>
+                <h3>Нет товаров</h3>
+                <p>В базе данных пока нет товаров</p>
+            </div>
+
+            <div id="noDocuments" class="no-data" style="display: none;">
+                <div class="no-data-icon">📂</div>
+                <h3>Нет документов</h3>
+                <p>В базе данных пока нет документов</p>
+            </div>
+
+            <div id="noOffers" class="no-data" style="display: none;">
+                <div class="no-data-icon">📂</div>
+                <h3>Нет коммерческих предложений</h3>
+                <p>В базе данных пока нет КП</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 Elter Bot | Данные обновляются в реальном времени</p>
+        </div>
+    </div>
+
+    <!-- Popup для документов -->
+    <div class="documents-popup" id="documentsPopup">
+        <div class="documents-popup-header">
+            <span class="documents-popup-title" id="popupTitle">Документы</span>
+            <button class="documents-popup-close" onclick="closeDocumentsPopup()">×</button>
+        </div>
+        <div id="documentsContent">
+            <div class="loading-documents">Загрузка...</div>
+        </div>
+    </div>
+
+    <script>
+        let companiesData = [];
+        let documentsData = [];
+        let offersData = [];
+        let priceAllData = [];
+        let currentView = 'companies';
+        let documentsLoaded = false;
+        let offersLoaded = false;
+        let priceAllLoaded = false;
+        let sortColumn = -1;
+        let sortAscending = true;
+        let priceSortColumn = -1;
+        let priceSortAscending = true;
+
+        // Загрузка данных при старте страницы
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCompanies();
+
+            // Поиск в реальном времени
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                filterCompanies(e.target.value);
+            });
+
+            // Наведение на статистику компаний
+            const companiesStatItem = document.getElementById('companiesStatItem');
+            companiesStatItem.addEventListener('mouseenter', () => {
+                showCompaniesView();
+            });
+            companiesStatItem.addEventListener('click', () => {
+                showCompaniesView();
+            });
+
+            // Клик по статистике товаров
+            const priceAllStatItem = document.getElementById('priceAllStatItem');
+            priceAllStatItem.addEventListener('mouseenter', () => {
+                showPriceAllView();
+            });
+            priceAllStatItem.addEventListener('click', () => {
+                showPriceAllView();
+            });
+
+            // Клик по статистике документов
+            const documentsStatItem = document.getElementById('documentsStatItem');
+            documentsStatItem.addEventListener('mouseenter', () => {
+                showDocumentsView();
+            });
+            documentsStatItem.addEventListener('click', () => {
+                showDocumentsView();
+            });
+
+            // Клик по статистике коммерческих предложений
+            const offersStatItem = document.getElementById('offersStatItem');
+            offersStatItem.addEventListener('mouseenter', () => {
+                showOffersView();
+            });
+            offersStatItem.addEventListener('click', () => {
+                showOffersView();
+            });
+
+            // Закрытие popup при клике вне его
+            document.addEventListener('click', (e) => {
+            const popup = document.getElementById('documentsPopup');
+            const statItem = document.getElementById('documentsStatItem');
+            const offersStatItem = document.getElementById('offersStatItem');
+
+            if (popup.classList.contains('show') &&
+                !popup.contains(e.target) &&
+                !statItem.contains(e.target) &&
+                !offersStatItem.contains(e.target)) {
+                closeDocumentsPopup();
+            }
+        });
+        });
+
+        function setActiveStat(view) {
+            const companiesStatItem = document.getElementById('companiesStatItem');
+            const priceAllStatItem = document.getElementById('priceAllStatItem');
+            const documentsStatItem = document.getElementById('documentsStatItem');
+            const offersStatItem = document.getElementById('offersStatItem');
+
+            companiesStatItem.classList.toggle('active', view === 'companies');
+            priceAllStatItem.classList.toggle('active', view === 'priceall');
+            documentsStatItem.classList.toggle('active', view === 'documents');
+            offersStatItem.classList.toggle('active', view === 'offers');
+        }
+
+        function updateTableTitle(title) {
+            document.getElementById('tableTitle').textContent = title;
+        }
+
+        function resetTables() {
+            document.getElementById('companiesTable').style.display = 'none';
+            document.getElementById('documentsTable').style.display = 'none';
+            document.getElementById('offersTable').style.display = 'none';
+            document.getElementById('priceAllTable').style.display = 'none';
+            document.getElementById('noData').style.display = 'none';
+            document.getElementById('noProducts').style.display = 'none';
+            document.getElementById('noDocuments').style.display = 'none';
+            document.getElementById('noOffers').style.display = 'none';
+        }
+
+        function showLoadingState() {
+            resetTables();
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideLoadingState() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        async function loadCompanies() {
+            const error = document.getElementById('error');
+
+            currentView = 'companies';
+            setActiveStat('companies');
+            updateTableTitle('Компании');
+            showLoadingState();
+
+            try {
+                const response = await fetch('/api/companies');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                companiesData = data.companies;
+                documentsLoaded = false;
+                offersLoaded = false;
+
+                // Обновляем статистику
+                document.getElementById('totalCompanies').textContent = data.total;
+                document.getElementById('totalDocuments').textContent = data.totalDocuments || 0;
+                document.getElementById('totalOffers').textContent = data.totalOffers || 0;
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('ru-RU');
+
+                hideLoadingState();
+                showCompaniesView();
+
+            } catch (err) {
+                hideLoadingState();
+                error.style.display = 'block';
+                error.textContent = `Ошибка загрузки данных: ${err.message}. Проверьте, что сервер запущен.`;
+                console.error('Error loading companies:', err);
+            }
+        }
+
+        function renderTable(companies) {
+            const tbody = document.getElementById('companiesBody');
+            tbody.innerHTML = '';
+
+            companies.forEach((company, index) => {
+                const row = tbody.insertRow();
+
+                // Добавляем обработчик клика на строку
+                row.style.cursor = 'pointer';
+                row.title = 'Нажмите, чтобы увидеть документы компании';
+                row.onclick = (e) => {
+                    // Не открываем popup если кликнули на email ссылку
+                    if (e.target.tagName !== 'A') {
+                        showCompanyDocuments(company.id, company.name_short || company.name_full);
+                    }
+                };
+
+                row.insertCell(0).textContent = index + 1;
+
+                const nameCell = row.insertCell(1);
+                nameCell.innerHTML = `<div class="company-name">${company.name_short || company.name_full || '-'}</div>`;
+
+                const innCell = row.insertCell(2);
+                innCell.innerHTML = `<span class="company-inn">${company.inn || '-'}</span>`;
+
+                row.insertCell(3).textContent = company.kpp || '-';
+                row.insertCell(4).textContent = company.ogrn || '-';
+                row.insertCell(5).textContent = company.ceo_name || '-';
+
+                const emailCell = row.insertCell(6);
+                if (company.email && company.email.length > 0) {
+                    emailCell.innerHTML = company.email.map(e => `<a href="mailto:${e}">${e}</a>`).join('<br>');
+                } else {
+                    emailCell.textContent = '-';
+                }
+
+                const dateCell = row.insertCell(7);
+                const date = new Date(company.created_at);
+                dateCell.textContent = date.toLocaleDateString('ru-RU');
+            });
+        }
+
+        function showCompaniesView() {
+            currentView = 'companies';
+            setActiveStat('companies');
+            updateTableTitle('Компании');
+            closeDocumentsPopup();
+
+            hideLoadingState();
+            document.getElementById('error').style.display = 'none';
+
+            const table = document.getElementById('companiesTable');
+            const noData = document.getElementById('noData');
+
+            document.getElementById('documentsTable').style.display = 'none';
+            document.getElementById('noDocuments').style.display = 'none';
+            document.getElementById('offersTable').style.display = 'none';
+            document.getElementById('noOffers').style.display = 'none';
+            document.getElementById('priceAllTable').style.display = 'none';
+            document.getElementById('noProducts').style.display = 'none';
+
+            if (!companiesData || companiesData.length === 0) {
+                table.style.display = 'none';
+                noData.style.display = 'block';
+                return;
+            }
+
+            renderTable(companiesData);
+            table.style.display = 'table';
+            noData.style.display = 'none';
+        }
+
+        async function showDocumentsView() {
+            currentView = 'documents';
+            setActiveStat('documents');
+            updateTableTitle('Документы');
+            closeDocumentsPopup();
+
+            hideLoadingState();
+            document.getElementById('error').style.display = 'none';
+
+            document.getElementById('companiesTable').style.display = 'none';
+            document.getElementById('noData').style.display = 'none';
+            document.getElementById('offersTable').style.display = 'none';
+            document.getElementById('noOffers').style.display = 'none';
+            document.getElementById('priceAllTable').style.display = 'none';
+            document.getElementById('noProducts').style.display = 'none';
+
+            if (documentsLoaded) {
+                renderDocumentsTable(documentsData);
+                return;
+            }
+
+            showLoadingState();
+            try {
+                const response = await fetch('/api/documents');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                documentsData = await response.json();
+                documentsLoaded = true;
+                hideLoadingState();
+                renderDocumentsTable(documentsData);
+            } catch (err) {
+                hideLoadingState();
+                const error = document.getElementById('error');
+                error.style.display = 'block';
+                error.textContent = `Ошибка загрузки документов: ${err.message}`;
+                console.error('Error loading documents:', err);
+            }
+        }
+
+        function renderDocumentsTable(documents) {
+            const table = document.getElementById('documentsTable');
+            const tbody = document.getElementById('documentsBody');
+            const noDocuments = document.getElementById('noDocuments');
+
+            tbody.innerHTML = '';
+
+            if (!documents || documents.length === 0) {
+                table.style.display = 'none';
+                noDocuments.style.display = 'block';
+                return;
+            }
+
+            documents.forEach((doc, index) => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = index + 1;
+
+                const nameCell = row.insertCell(1);
+                nameCell.textContent = doc.file_name || '-';
+
+                const companyCell = row.insertCell(2);
+                companyCell.textContent = doc.name_short || doc.name_full || '-';
+
+                row.insertCell(3).textContent = doc.inn || '-';
+
+                const dateCell = row.insertCell(4);
+                const date = new Date(doc.created_at);
+                dateCell.textContent = date.toLocaleDateString('ru-RU');
+
+                const actionCell = row.insertCell(5);
+                const downloadButton = doc.storage_url ? `
+                    <button class="document-download" onclick="downloadDocument('${doc.id}')">
+                        ⬇ Скачать
+                    </button>
+                ` : `
+                    <span class="document-unavailable" title="Файл не сохранен на сервере">
+                        📝 Только данные
+                    </span>
+                `;
+
+                actionCell.innerHTML = `
+                    <div class="document-actions">
+                        ${downloadButton}
+                        <button class="document-delete" onclick="deleteDocumentById('${doc.id}')">
+                            🗑 Удалить
+                        </button>
+                    </div>
+                `;
+            });
+
+            table.style.display = 'table';
+            noDocuments.style.display = 'none';
+        }
+
+        async function showOffersView() {
+            currentView = 'offers';
+            setActiveStat('offers');
+            updateTableTitle('Коммерческие предложения');
+            closeDocumentsPopup();
+
+            hideLoadingState();
+            document.getElementById('error').style.display = 'none';
+
+            document.getElementById('companiesTable').style.display = 'none';
+            document.getElementById('noData').style.display = 'none';
+            document.getElementById('priceAllTable').style.display = 'none';
+            document.getElementById('noProducts').style.display = 'none';
+            document.getElementById('documentsTable').style.display = 'none';
+            document.getElementById('noDocuments').style.display = 'none';
+
+            if (offersLoaded) {
+                renderOffersTable(offersData);
+                return;
+            }
+
+            showLoadingState();
+            try {
+                const response = await fetch('/api/offers');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                offersData = await response.json();
+                offersLoaded = true;
+                hideLoadingState();
+                renderOffersTable(offersData);
+            } catch (err) {
+                hideLoadingState();
+                const error = document.getElementById('error');
+                error.style.display = 'block';
+                error.textContent = `Ошибка загрузки КП: ${err.message}`;
+                console.error('Error loading offers:', err);
+            }
+        }
+
+        function renderOffersTable(offers) {
+            const table = document.getElementById('offersTable');
+            const tbody = document.getElementById('offersBody');
+            const noOffers = document.getElementById('noOffers');
+
+            tbody.innerHTML = '';
+
+            if (!offers || offers.length === 0) {
+                table.style.display = 'none';
+                noOffers.style.display = 'block';
+                return;
+            }
+
+            offers.forEach((offer, index) => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = index + 1;
+
+                const fileCell = row.insertCell(1);
+                fileCell.textContent = offer.fileName || '-';
+
+                const sizeCell = row.insertCell(2);
+                sizeCell.textContent = formatFileSize(offer.fileSize);
+
+                const dateCell = row.insertCell(3);
+                const date = new Date(offer.createdAt);
+                dateCell.textContent = date.toLocaleDateString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const actionCell = row.insertCell(4);
+                actionCell.innerHTML = `
+                    <div class="document-actions">
+                        <button class="document-download" onclick="downloadOffer('${encodeURIComponent(offer.fileName)}')">
+                            ⬇ Скачать
+                        </button>
+                        <button class="document-delete" onclick="deleteOfferByName('${encodeURIComponent(offer.fileName)}')">
+                            🗑 Удалить
+                        </button>
+                    </div>
+                `;
+            });
+
+            table.style.display = 'table';
+            noOffers.style.display = 'none';
+        }
+
+        async function showPriceAllView() {
+            currentView = 'priceall';
+            setActiveStat('priceall');
+            updateTableTitle('Товары (PriceAll)');
+            closeDocumentsPopup();
+
+            hideLoadingState();
+            document.getElementById('error').style.display = 'none';
+
+            document.getElementById('companiesTable').style.display = 'none';
+            document.getElementById('noData').style.display = 'none';
+            document.getElementById('documentsTable').style.display = 'none';
+            document.getElementById('noDocuments').style.display = 'none';
+            document.getElementById('offersTable').style.display = 'none';
+            document.getElementById('noOffers').style.display = 'none';
+
+            if (priceAllLoaded) {
+                renderPriceAllTable(priceAllData);
+                return;
+            }
+
+            showLoadingState();
+            try {
+                const response = await fetch('/api/priceall');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                priceAllData = await response.json();
+                priceAllLoaded = true;
+                document.getElementById('totalProducts').textContent = priceAllData.length;
+                hideLoadingState();
+                renderPriceAllTable(priceAllData);
+            } catch (err) {
+                hideLoadingState();
+                const error = document.getElementById('error');
+                error.style.display = 'block';
+                error.textContent = `Ошибка загрузки товаров: ${err.message}`;
+                console.error('Error loading products:', err);
+            }
+        }
+
+        function renderPriceAllTable(items) {
+            const table = document.getElementById('priceAllTable');
+            const tbody = document.getElementById('priceAllBody');
+            const noProducts = document.getElementById('noProducts');
+
+            tbody.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                table.style.display = 'none';
+                noProducts.style.display = 'block';
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const row = tbody.insertRow();
+                row.dataset.name = item.name || '';
+                row.dataset.connector = item.connector || '';
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = item.name || '-';
+                row.insertCell(2).textContent = item.connector || '-';
+                row.insertCell(3).textContent = formatCurrency(item.price_per_unit);
+                row.insertCell(4).textContent = formatCurrency(item.vat);
+                row.insertCell(5).textContent = formatCurrency(item.total_with_vat);
+                row.insertCell(6).textContent = item.warranty || '-';
+                const actionCell = row.insertCell(7);
+                actionCell.innerHTML = `
+                    <div class="document-actions">
+                        <button class="document-download" onclick="startEditPriceRow(this)">
+                            ✏️ Редактировать
+                        </button>
+                    </div>
+                `;
+            });
+
+            table.style.display = 'table';
+            noProducts.style.display = 'none';
+        }
+
+        function filterCompanies(searchTerm) {
+            searchTerm = searchTerm.toLowerCase().trim();
+
+            if (currentView === 'priceall') {
+                filterPriceAll(searchTerm);
+                return;
+            }
+
+            if (currentView !== 'companies') {
+                return;
+            }
+
+            if (!searchTerm) {
+                renderTable(companiesData);
+                return;
+            }
+
+            const filtered = companiesData.filter(company => {
+                return (
+                    (company.name_short && company.name_short.toLowerCase().includes(searchTerm)) ||
+                    (company.name_full && company.name_full.toLowerCase().includes(searchTerm)) ||
+                    (company.inn && company.inn.includes(searchTerm)) ||
+                    (company.kpp && company.kpp.includes(searchTerm)) ||
+                    (company.ogrn && company.ogrn.includes(searchTerm)) ||
+                    (company.ceo_name && company.ceo_name.toLowerCase().includes(searchTerm))
+                );
+            });
+
+            renderTable(filtered);
+        }
+
+        function filterPriceAll(searchTerm) {
+            if (!searchTerm) {
+                renderPriceAllTable(priceAllData);
+                return;
+            }
+
+            const filtered = priceAllData.filter(item => {
+                return (
+                    (item.name && item.name.toLowerCase().includes(searchTerm)) ||
+                    (item.connector && item.connector.toLowerCase().includes(searchTerm)) ||
+                    (item.warranty && item.warranty.toLowerCase().includes(searchTerm))
+                );
+            });
+
+            renderPriceAllTable(filtered);
+        }
+
+        function sortTable(columnIndex) {
+            const headers = document.querySelectorAll('th');
+
+            // Убираем классы сортировки у всех заголовков
+            headers.forEach(h => {
+                h.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            // Если кликнули на ту же колонку - меняем направление
+            if (sortColumn === columnIndex) {
+                sortAscending = !sortAscending;
+            } else {
+                sortColumn = columnIndex;
+                sortAscending = true;
+            }
+
+            // Добавляем класс к текущему заголовку
+            headers[columnIndex].classList.add(sortAscending ? 'sorted-asc' : 'sorted-desc');
+
+            const sorted = [...companiesData].sort((a, b) => {
+                let aVal, bVal;
+
+                switch(columnIndex) {
+                    case 0: // №
+                        return sortAscending ? 0 : 0;
+                    case 1: // Название
+                        aVal = (a.name_short || a.name_full || '').toLowerCase();
+                        bVal = (b.name_short || b.name_full || '').toLowerCase();
+                        break;
+                    case 2: // ИНН
+                        aVal = a.inn || '';
+                        bVal = b.inn || '';
+                        break;
+                    case 3: // КПП
+                        aVal = a.kpp || '';
+                        bVal = b.kpp || '';
+                        break;
+                    case 4: // ОГРН
+                        aVal = a.ogrn || '';
+                        bVal = b.ogrn || '';
+                        break;
+                    case 5: // Руководитель
+                        aVal = (a.ceo_name || '').toLowerCase();
+                        bVal = (b.ceo_name || '').toLowerCase();
+                        break;
+                    case 6: // Email
+                        aVal = (a.email && a.email[0]) || '';
+                        bVal = (b.email && b.email[0]) || '';
+                        break;
+                    case 7: // Дата
+                        aVal = new Date(a.created_at);
+                        bVal = new Date(b.created_at);
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aVal < bVal) return sortAscending ? -1 : 1;
+                if (aVal > bVal) return sortAscending ? 1 : -1;
+                return 0;
+            });
+
+            renderTable(sorted);
+        }
+
+        function sortPriceTable(columnIndex) {
+            const headers = document.querySelectorAll('#priceAllTable th');
+            headers.forEach(h => {
+                h.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            if (priceSortColumn === columnIndex) {
+                priceSortAscending = !priceSortAscending;
+            } else {
+                priceSortColumn = columnIndex;
+                priceSortAscending = true;
+            }
+
+            headers[columnIndex].classList.add(priceSortAscending ? 'sorted-asc' : 'sorted-desc');
+
+            const sorted = [...priceAllData].sort((a, b) => {
+                let aVal, bVal;
+
+                switch (columnIndex) {
+                    case 0:
+                        return 0;
+                    case 1:
+                        aVal = (a.name || '').toLowerCase();
+                        bVal = (b.name || '').toLowerCase();
+                        break;
+                    case 2:
+                        aVal = (a.connector || '').toLowerCase();
+                        bVal = (b.connector || '').toLowerCase();
+                        break;
+                    case 3:
+                        aVal = Number(a.price_per_unit) || 0;
+                        bVal = Number(b.price_per_unit) || 0;
+                        break;
+                    case 4:
+                        aVal = Number(a.vat) || 0;
+                        bVal = Number(b.vat) || 0;
+                        break;
+                    case 5:
+                        aVal = Number(a.total_with_vat) || 0;
+                        bVal = Number(b.total_with_vat) || 0;
+                        break;
+                    case 6:
+                        aVal = (a.warranty || '').toLowerCase();
+                        bVal = (b.warranty || '').toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aVal < bVal) return priceSortAscending ? -1 : 1;
+                if (aVal > bVal) return priceSortAscending ? 1 : -1;
+                return 0;
+            });
+
+            renderPriceAllTable(sorted);
+        }
+
+        // Показать все документы
+        function showAllDocuments() {
+            showDocumentsView();
+        }
+
+        // Показать документы компании
+        async function showCompanyDocuments(companyId, companyName) {
+            const popup = document.getElementById('documentsPopup');
+            const content = document.getElementById('documentsContent');
+            const title = document.getElementById('popupTitle');
+
+            title.textContent = `Документы: ${companyName}`;
+            content.innerHTML = '<div class="loading-documents">Загрузка документов...</div>';
+
+            popup.style.left = '50%';
+            popup.style.top = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            popup.classList.add('show');
+
+            try {
+                const response = await fetch(`/api/documents/company/${companyId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const documents = await response.json();
+                renderDocuments(documents);
+            } catch (err) {
+                content.innerHTML = `<div class="error">Ошибка загрузки: ${err.message}</div>`;
+                console.error('Error loading company documents:', err);
+            }
+        }
+
+        // Отрисовка списка документов
+        function renderDocuments(documents) {
+            const content = document.getElementById('documentsContent');
+
+            if (!documents || documents.length === 0) {
+                content.innerHTML = '<div class="no-documents">📂 Нет документов</div>';
+                return;
+            }
+
+            const list = documents.map(doc => {
+                const date = new Date(doc.created_at).toLocaleDateString('ru-RU');
+                const companyInfo = doc.name_short || doc.name_full ?
+                    `<div><strong>${doc.name_short || doc.name_full}</strong> (${doc.inn || '-'})</div>` : '';
+
+                // Кнопка скачивания доступна только если файл сохранен на диске
+                const downloadButton = doc.storage_url ?
+                    `<button class="document-download" onclick="downloadDocument('${doc.id}')">
+                        ⬇ Скачать
+                    </button>` :
+                    `<span class="document-unavailable" title="Файл не сохранен на сервере">
+                        📝 Только данные
+                    </span>`;
+
+                return `
+                    <li class="document-item">
+                        <div class="document-info">
+                            <div class="document-name">📄 ${doc.file_name}</div>
+                            <div class="document-meta">
+                                ${companyInfo}
+                                <div>Дата: ${date}</div>
+                            </div>
+                        </div>
+                        ${downloadButton}
+                    </li>
+                `;
+            }).join('');
+
+            content.innerHTML = `<ul class="documents-list">${list}</ul>`;
+        }
+
+        // Скачать документ
+        function downloadDocument(documentId) {
+            window.location.href = `/api/download/${documentId}`;
+        }
+
+        // Удалить документ
+        async function deleteDocumentById(documentId) {
+            if (!confirm('Удалить документ из списка и базы данных?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/documents/${documentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                documentsData = documentsData.filter(doc => String(doc.id) !== String(documentId));
+                if (documentsLoaded) {
+                    renderDocumentsTable(documentsData);
+                }
+
+                const totalDocumentsEl = document.getElementById('totalDocuments');
+                const currentTotal = parseInt(totalDocumentsEl.textContent, 10);
+                if (!Number.isNaN(currentTotal) && currentTotal > 0) {
+                    totalDocumentsEl.textContent = currentTotal - 1;
+                }
+            } catch (err) {
+                alert(`Ошибка удаления: ${err.message}`);
+                console.error('Error deleting document:', err);
+            }
+        }
+
+        // Показать все коммерческие предложения
+        async function showAllOffers() {
+            showOffersView();
+        }
+
+        // Отрисовка списка коммерческих предложений
+        function renderOffers(offers) {
+            renderOffersTable(offers);
+        }
+
+        // Скачать коммерческое предложение
+        function downloadOffer(fileName) {
+            window.location.href = `/api/download/offer/${fileName}`;
+        }
+
+        // Удалить коммерческое предложение
+        async function deleteOfferByName(encodedFileName) {
+            const fileName = decodeURIComponent(encodedFileName);
+            if (!confirm(`Удалить коммерческое предложение "${fileName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/offers/${encodeURIComponent(fileName)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                offersData = offersData.filter(offer => offer.fileName !== fileName);
+                if (offersLoaded) {
+                    renderOffersTable(offersData);
+                }
+
+                const totalOffersEl = document.getElementById('totalOffers');
+                const currentTotal = parseInt(totalOffersEl.textContent, 10);
+                if (!Number.isNaN(currentTotal) && currentTotal > 0) {
+                    totalOffersEl.textContent = currentTotal - 1;
+                }
+            } catch (err) {
+                alert(`Ошибка удаления КП: ${err.message}`);
+                console.error('Error deleting offer:', err);
+            }
+        }
+
+        // Закрыть popup
+        function closeDocumentsPopup() {
+            const popup = document.getElementById('documentsPopup');
+            popup.classList.remove('show');
+        }
+
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (!bytes) return '-';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function formatCurrency(value) {
+            const num = Number(value);
+            if (!Number.isFinite(num)) return '-';
+            return num.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function startEditPriceRow(button) {
+            const row = button.closest('tr');
+            if (!row || row.dataset.editing === 'true') return;
+
+            row.dataset.editing = 'true';
+
+            const priceCell = row.cells[3];
+            const vatCell = row.cells[4];
+            const totalCell = row.cells[5];
+            const warrantyCell = row.cells[6];
+
+            row.dataset.originalPrice = priceCell.textContent;
+            row.dataset.originalVat = vatCell.textContent;
+            row.dataset.originalTotal = totalCell.textContent;
+            row.dataset.originalWarranty = warrantyCell.textContent;
+
+            priceCell.innerHTML = `<input class="price-edit-input" type="text" value="${priceCell.textContent.replace(/\s/g, '')}">`;
+            vatCell.innerHTML = `<input class="price-edit-input" type="text" value="${vatCell.textContent.replace(/\s/g, '')}">`;
+            totalCell.innerHTML = `<input class="price-edit-input" type="text" value="${totalCell.textContent.replace(/\s/g, '')}">`;
+            warrantyCell.innerHTML = `<input class="price-edit-input" type="text" value="${warrantyCell.textContent}">`;
+
+            row.cells[7].innerHTML = `
+                <div class="document-actions">
+                    <button class="document-download" onclick="savePriceRow(this)">
+                        💾 Сохранить
+                    </button>
+                    <button class="document-delete" onclick="cancelPriceRow(this)">
+                        ✖ Отмена
+                    </button>
+                </div>
+            `;
+        }
+
+        function cancelPriceRow(button) {
+            const row = button.closest('tr');
+            if (!row) return;
+
+            row.cells[3].textContent = row.dataset.originalPrice;
+            row.cells[4].textContent = row.dataset.originalVat;
+            row.cells[5].textContent = row.dataset.originalTotal;
+            row.cells[6].textContent = row.dataset.originalWarranty;
+            row.cells[7].innerHTML = `
+                <div class="document-actions">
+                    <button class="document-download" onclick="startEditPriceRow(this)">
+                        ✏️ Редактировать
+                    </button>
+                </div>
+            `;
+            row.dataset.editing = 'false';
+        }
+
+        async function savePriceRow(button) {
+            const row = button.closest('tr');
+            if (!row) return;
+
+            const priceInput = row.cells[3].querySelector('input');
+            const vatInput = row.cells[4].querySelector('input');
+            const totalInput = row.cells[5].querySelector('input');
+            const warrantyInput = row.cells[6].querySelector('input');
+
+            const payload = {
+                name: row.dataset.name,
+                connector: row.dataset.connector || null,
+                price_per_unit: parsePriceValue(priceInput.value),
+                vat: parsePriceValue(vatInput.value),
+                total_with_vat: parsePriceValue(totalInput.value),
+                warranty: warrantyInput.value.trim()
+            };
+
+            try {
+                const response = await fetch('/api/priceall', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const updated = await response.json();
+                row.cells[3].textContent = formatCurrency(updated.price_per_unit);
+                row.cells[4].textContent = formatCurrency(updated.vat);
+                row.cells[5].textContent = formatCurrency(updated.total_with_vat);
+                row.cells[6].textContent = updated.warranty || '-';
+                row.cells[7].innerHTML = `
+                    <div class="document-actions">
+                        <button class="document-download" onclick="startEditPriceRow(this)">
+                            ✏️ Редактировать
+                        </button>
+                    </div>
+                `;
+                row.dataset.editing = 'false';
+
+                const idx = priceAllData.findIndex(item =>
+                    item.name === row.dataset.name &&
+                    String(item.connector || '') === String(row.dataset.connector || '')
+                );
+                if (idx !== -1) {
+                    priceAllData[idx] = updated;
+                }
+            } catch (err) {
+                alert(`Ошибка сохранения: ${err.message}`);
+                console.error('Error saving price item:', err);
+                cancelPriceRow(button);
+            }
+        }
+
+        function parsePriceValue(value) {
+            if (value === null || value === undefined) return null;
+            const normalized = String(value).replace(/\s+/g, '').replace(',', '.');
+            const num = Number(normalized);
+            return Number.isFinite(num) ? num : null;
+        }
+    </script>
+</body>
+</html>

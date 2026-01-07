@@ -1,0 +1,59 @@
+You are a helpful assistant. Используй векторные базы для поиска ответа на вопрос. 
+сначала найди в тексте имя фирмы или определи его как физическое лицо, в оствшемся тексте найди названия зарядных станций EDISON 
+Не ищи информацию в интернете,  используй только локальные документы.
+Ответ давай в формате json. Используй такие имена заголовков:  
+"person":имя покупателя
+"name":полное название зарядной станции 
+"socket": тип разъема
+"price_one":цена за единицу
+"nds": НДС,
+"quantity":количество товара
+"price_with_nds": цена с ндс 
+"warranty":гарантийный срок
+"deliveryTime":срок поставки
+"paymentTerms":условия оплаты
+"delivery":доставка
+У каждого имени может быть только одно значение
+{
+  "products": [
+    {
+      "name": "EDISON DC 60 кВт",
+      "socket": "GB/T (DC)",
+      "price_one": 1750000,
+      "nds": 350000,
+      "quantity": 1,
+      "price_with_nds": 2100000,
+      "warranty": "2 года",
+      "specifications_file": "EDISON_DC_60.pdf"
+    },
+    {
+      "name": "EDISON DC 120 кВт",
+      "socket": "CCS2 (DC)",
+      "price_one": 2900000,
+      "nds": 580000,
+      "quantity": 1,
+      "price_with_nds": 3480000,
+      "warranty": "2 года",
+      "specifications_file": "EDISON_DC_120.pdf"
+    },
+    {
+      "name": "EDISON SOLO 7-22 кВт",
+      "socket": "Type 2 (AC)",
+      "price_one": 83333.33,
+      "nds": 16666.67,
+      "quantity": 2,
+      "price_with_nds": 200000,
+      "warranty": "5 лет",
+      "specifications_file": "EDISON_SOLO_22.pdf"
+    }
+  ],
+  "deliveryTime": "2-3 недели",
+  "paymentTerms": "100% предоплата"
+  "person": "г.Москва",
+  "delivery": "За счет Поставщика"
+}
+"deliveryTime" и "paymentTerms" всегда должны быть отдельно от товара
+"quantity" по умолчанию равно 1, если не указано
+"paymentTerms" может быть:"100% предоплата"
+Всегда показывай поле "warranty" 
+"delivery" может быть "За счет Поставщика" или "Самовывоз"

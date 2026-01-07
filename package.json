@@ -1,0 +1,38 @@
+{
+  "name": "telegram-chatgpt-bot",
+  "version": "1.0.0",
+  "description": "A Telegram bot that integrates with OpenAI's ChatGPT API",
+  "main": "src/telegram.bot.js",
+  "scripts": {
+    "start": "node src/telegram.bot.js",
+    "dev": "nodemon src/telegram.bot.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "openai",
+    "chatgpt"
+  ],
+  "author": "Developer",
+  "license": "MIT",
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.9.0",
+    "dotenv": "^16.0.3",
+    "form-data": "^4.0.5",
+    "mammoth": "^1.11.0",
+    "node-telegram-bot-api": "^0.61.0",
+    "openai": "^6.10.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "1.1.1",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "textract": "^2.5.0",
+    "word-extractor": "^1.0.4"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "nodemon": "^2.0.20"
+  }
+}
