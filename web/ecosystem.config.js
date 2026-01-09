@@ -10,12 +10,12 @@ module.exports = {
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'production',
-        WEB_PORT: 3000,
+        WEB_PORT: 3001,
         WEB_HOST: '0.0.0.0'
       },
       env_development: {
         NODE_ENV: 'development',
-        WEB_PORT: 3000,
+        WEB_PORT: 3001,
         WEB_HOST: 'localhost'
       },
       error_file: './logs/error.log',

@@ -8,7 +8,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { pool } = require('./database');
 
-const PORT = process.env.WEB_PORT || 3000;
+const PORT = process.env.WEB_PORT || 3001;
 const HOST = process.env.WEB_HOST || '0.0.0.0';
 
 // MIME типы для файлов
