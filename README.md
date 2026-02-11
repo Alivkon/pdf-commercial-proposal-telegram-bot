@@ -1,6 +1,3 @@
-Срок поставки и условия оплаты называются при запросе КП
-Гарантия на АС - 5 лет, на ДС - 2 года
-Срок службы везде 10 лет
 # Telegram ChatGPT Bot
 
 A Telegram bot that integrates with OpenAI's ChatGPT API to provide intelligent responses to text and voice messages.
