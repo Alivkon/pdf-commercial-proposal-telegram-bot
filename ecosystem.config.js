@@ -1,9 +1,10 @@
 module.exports = {
   apps: [
     {
-      name: 'nicolay-charge-gpt',
+      name: 'elter-bot',
       script: 'src/telegram.bot.js',
-      cwd: '/home/alivkon/bots/NicolayChargeGPT/jscript', // рабочая директория
+      cwd: '/home/alivkon/bots/ElterBotAI', // рабочая директория
+      node_args: '-r dotenv/config',
       exec_mode: 'fork',
       instances: 1,
       env: {
