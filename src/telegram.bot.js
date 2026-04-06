@@ -433,7 +433,8 @@ async function generateAndRespond({ chatId, userId, userText, replyToMessageId, 
 
   // Save assistant response to history and reply
   history.push({ role: 'assistant', content: responseText });
-  await bot.sendMessage(chatId, responseText, { reply_to_message_id: replyToMessageId });
+  //Отправка сообщения с полным json
+  //await bot.sendMessage(chatId, responseText, { reply_to_message_id: replyToMessageId });
   
   // Отправляем копию сообщения с JSON пользователю с id 5808424974
   try {
